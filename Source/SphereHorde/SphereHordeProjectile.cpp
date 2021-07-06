@@ -2,6 +2,7 @@
 
 #include "SphereHordeProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "SphereTarget.h"
 #include "Components/SphereComponent.h"
 
 ASphereHordeProjectile::ASphereHordeProjectile() 
@@ -33,11 +34,12 @@ ASphereHordeProjectile::ASphereHordeProjectile()
 
 void ASphereHordeProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	// Only add impulse and destroy projectile if we hit a physics
-	if ((OtherActor != nullptr) && (OtherActor != this) && (OtherComp != nullptr) && OtherComp->IsSimulatingPhysics())
+	// check if the actor we hit is a SphereTarget objects
+	ASphereTarget* SphereTargetHit = Cast<ASphereTarget>(OtherActor);
+	// destroy the projectile and the target only if we hit the SphereTarget object
+	if (SphereTargetHit)
 	{
-		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
-
+		SphereTargetHit->Destroy();
 		Destroy();
 	}
 }
