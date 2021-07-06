@@ -25,6 +25,11 @@ public:
 	// the number of the destroyed spheres
 	int32	DestroyedSpheres;
 
+	// the number of the spheres needed to be destoyed in order to start new wave
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "10", ClampMax = "30", UIMin = "30", UIMax = "30"))
+	int32	DestroyedSpheresPerWave = 10;
+
+	// updates the number of destroyed spheres
 	void	UpdatedNubmerOfDestroyedSpheres();
 
 protected:

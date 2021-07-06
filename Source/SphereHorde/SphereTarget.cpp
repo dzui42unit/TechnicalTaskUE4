@@ -18,10 +18,13 @@ ASphereTarget::ASphereTarget()
 	CollisionCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule Component"));
 	CollisionCapsule->SetCapsuleSize(CollisionSphereRadius, CollisionSphereRadius / 2.f);
 	SetRootComponent(CollisionCapsule);
+	CollisionCapsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	CollisionCapsule->SetCollisionProfileName("Pawn");
 
 	// create a mesh component and attach it to the capsule (root) component
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh Component"));
 	Mesh->SetupAttachment(CollisionCapsule);
+	Mesh->SetCollisionProfileName("Pawn");
 }
 
 void ASphereTarget::PlayDeathEffectsAndDestroy()
@@ -43,13 +46,11 @@ void ASphereTarget::PlayDeathEffectsAndDestroy()
 void ASphereTarget::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void ASphereTarget::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 

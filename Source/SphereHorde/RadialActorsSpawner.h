@@ -17,6 +17,8 @@ class UBoxComponent;
 	2. initial minimum distance between the actors
 	3. initial amount of actors
 	4. radius of spawn 
+	5. step of changing the amount of spheres in percentages
+	6. step of changing the spawn radius in percentages
 */
 
 class UBoxComponent;
@@ -32,15 +34,23 @@ struct FSpawnRules
 
 	// initial minimum distance between the actors
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "80.0", ClampMax = "160.0", UIMin = "80.0", UIMax = "160.0"))
-	float	DistanceBetweenObjects = 80.f;
+	float	DistanceBetweenObjects;
 
 	// initial amount of actors
-	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "10", ClampMax = "20", UIMin = "10", UIMax = "20"))
-	int32	ActorsNb = 10;
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "15", ClampMax = "20", UIMin = "15", UIMax = "20"))
+	int32	ActorsNb;
 
 	// radius of the aread where to spawn object
-	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "1500", ClampMax = "2000", UIMin = "1500", UIMax = "2000"))
-	float	SpawnRadius = 1500.f;
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "100", ClampMax = "3500", UIMin = "100", UIMax = "3500"))
+	float	SpawnRadius;
+
+	// the step of changing the amount of spheres in percentages
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "5.0", ClampMax = "100.0", UIMin = "5.0", UIMax = "100.0"))
+	float	ActorsNbStep;
+
+	// the step of changing the spawn radius in percentages
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "5.0", ClampMax = "100.0", UIMin = "5.0", UIMax = "100.0"))
+	float	SpawnRadiusStep;
 };
 
 UCLASS()
@@ -52,6 +62,27 @@ public:
 	// Sets default values for this actor's properties
 	ARadialActorsSpawner();
 
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+	// spawns the targets in the area
+	void		SpawnTargetSpheres();
+
+	// returns the radius of the spawn area
+	float		GetSpawnerRadius() const;
+
+	// returns the number of spawned actors
+	int32		GetNumberOfSpawnedActors() const;
+
+	// checks if the distance of the actor is greater than some constant value
+	bool	isActorFarFromSpawnedActors(ASphereTarget* SpawnedTarget) const;
+
+	// update the spawner parameters, number of spheres and radius
+	void	UpdateSpawnerParameters();
+
+	// sets the spawner position, taking into account player pawn position
+	void	SetSpawnerPosition();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -62,16 +93,12 @@ protected:
 
 	// sphere component to represent the area for spawning Target Spheres
 	UPROPERTY(EditDefaultsOnly)
-	UBoxComponent* SpawnBoundingBox;
+	UBoxComponent* SpawnBoundingBox;	
 
+	// array that holds all target objects
 	TArray<ASphereTarget *>	TargetSpheres;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	void		SpawnTargetSpheres();
-
-	float		GetSpawnerRadius() const;
-
+private:
+	// update the array of spawned actors
+	void		UpdatedActorsArray();
 };
