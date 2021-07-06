@@ -45,5 +45,4 @@ public:
 
 	// destroy the object an spawn vfx
 	void	PlayDeathEffectsAndDestroy();
-
 };

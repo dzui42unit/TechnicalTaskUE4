@@ -4,6 +4,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Particles/ParticleSystem.h"
+#include "SphereHordeGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "SphereTarget.h"
 
@@ -29,6 +30,11 @@ void ASphereTarget::PlayDeathEffectsAndDestroy()
 	if (DestructionParticle)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), DestructionParticle, GetActorLocation());
+		ASphereHordeGameMode* GameMode = Cast<ASphereHordeGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		if (GameMode)
+		{
+			GameMode->UpdatedNubmerOfDestroyedSpheres();
+		}
 		Destroy();
 	}
 }
