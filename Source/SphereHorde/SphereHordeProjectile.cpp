@@ -39,7 +39,6 @@ void ASphereHordeProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 	// destroy the projectile and the target only if we hit the SphereTarget object
 	if (SphereTargetHit)
 	{
-		SphereTargetHit->Destroy();
-		Destroy();
+		SphereTargetHit->PlayDeathEffectsAndDestroy();
 	}
 }

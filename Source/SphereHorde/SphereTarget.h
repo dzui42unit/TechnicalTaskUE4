@@ -8,6 +8,7 @@
 
 class UStaticMeshComponent;
 class UCapsuleComponent;
+class UParticleSystem;
 
 UCLASS()
 class SPHEREHORDE_API ASphereTarget : public AActor
@@ -34,8 +35,15 @@ protected:
 	// capsule radius, 50.f by default
 	float CollisionSphereRadius = 50.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Vfx")
+	// particle system component for the vfx when the object is destroyed
+	UParticleSystem*	DestructionParticle;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	// destroy the object an spawn vfx
+	void	PlayDeathEffectsAndDestroy();
 
 };
