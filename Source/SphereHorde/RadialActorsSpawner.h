@@ -78,7 +78,7 @@ public:
 	bool	isActorFarFromSpawnedActors(ASphereTarget* SpawnedTarget) const;
 
 	// update the spawner parameters, number of spheres and radius
-	void	UpdateSpawnerParameters();
+	void	StartNewWave();
 
 	// sets the spawner position, taking into account player pawn position
 	void	SetSpawnerPosition();

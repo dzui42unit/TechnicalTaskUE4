@@ -47,7 +47,9 @@ void ARadialActorsSpawner::BeginPlay()
 	Super::BeginPlay();
 
 	// set the size of the bounding box
+	SetSpawnerPosition();
 	SpawnBoundingBox->SetBoxExtent(FVector(SpawnRules.SpawnRadius, SpawnRules.SpawnRadius, SpawnRules.SpawnRadius));
+	SpawnTargetSpheres();
 }
 
 // Called every frame
@@ -144,7 +146,7 @@ bool ARadialActorsSpawner::isActorFarFromSpawnedActors(ASphereTarget* SpawnedTar
 
 // update the spawner parameters
 // such as number of actors and spawn radius
-void ARadialActorsSpawner::UpdateSpawnerParameters()
+void ARadialActorsSpawner::StartNewWave()
 {
 	// update number of actor on the certain percentage
 	SpawnRules.ActorsNb += ((float)SpawnRules.ActorsNb * (SpawnRules.ActorsNbStep / 100.0f));

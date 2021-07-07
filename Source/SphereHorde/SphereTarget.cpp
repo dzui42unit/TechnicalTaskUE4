@@ -36,7 +36,7 @@ void ASphereTarget::PlayDeathEffectsAndDestroy()
 		ASphereHordeGameMode* GameMode = Cast<ASphereHordeGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 		if (GameMode)
 		{
-			GameMode->UpdatedNubmerOfDestroyedSpheres();
+			GameMode->UpdatedNubmerOfDestroyedSpheres(this);
 		}
 		Destroy();
 	}
