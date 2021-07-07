@@ -24,10 +24,14 @@ public:
 	TSubclassOf<ARadialActorsSpawner> SpheresSpawner;
 
 	// the number of the spheres needed to be destoyed in order to start new wave
-	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "10", ClampMax = "30", UIMin = "10", UIMax = "30"), Category = "Gameplay")
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "10", ClampMax = "15", UIMin = "10", UIMax = "30"), Category = "Gameplay")
 	int32	DestroyedSpheresPerWave = 10;
 
-	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "1500.0", ClampMax = "2000.0", UIMin = "2000.0", UIMax = "2000.0"), Category = "Gameplay")
+	// the number of the spheres needed to be destoyed in order to start new wave
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "15", ClampMax = "30", UIMin = "15", UIMax = "30"), Category = "Gameplay")
+	int32	ActorsPerWave = 15;
+
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "1500.0", ClampMax = "2000.0", UIMin = "1500.0", UIMax = "2000.0"), Category = "Gameplay")
 	float	SpheresDistanceFromOrigin;
 
 	// updates the number of destroyed spheres

@@ -27,21 +27,19 @@ ASphereHordeGameMode::ASphereHordeGameMode()
 
 void ASphereHordeGameMode::BeginPlay()
 {
-	
 	// Get player pawn, if the player pawn if not nullptr we get its location
-	// to spawn a RadialActorsSpawner if  RadialActorsSpawner is not nullptr
+	// to spawn a RadialActorsSpawner if RadialActorsSpawner is not nullptr
+	// initialize its ActorsNb and InnerRadiusNb
 	if (SpheresSpawner)
 	{
-		CreatedSpheresSpawner = GetWorld()->SpawnActor<ARadialActorsSpawner>(SpheresSpawner, FVector::ZeroVector, FRotator::ZeroRotator);
-		if (CreatedSpheresSpawner)
-		{
-			// set the position of the spawner
-			//CreatedSheresSpawner->SetSpawnerPosition();
-		}
-		else
+		FTransform ActorTransform = FTransform((FVector::ZeroVector, FRotator::ZeroRotator));
+		CreatedSpheresSpawner = GetWorld()->SpawnActorDeferred<ARadialActorsSpawner>(SpheresSpawner, ActorTransform);
+		if (!CreatedSpheresSpawner)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("FAILED to create CreatedSheresSpawner in SphereHordeGameMode"))
 		}
+		CreatedSpheresSpawner->Initialize(ActorsPerWave, DestroyedSpheresPerWave);
+		CreatedSpheresSpawner->FinishSpawning(ActorTransform);
 	}
 	else
 	{

@@ -4,20 +4,19 @@
 #include "SphereTarget.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/BoxComponent.h"
+#include "NavigationPath.h"
+#include "NavigationSystem.h"
 #include "RadialActorsSpawner.h"
 
-// Sets default values
+// the constructor that takes number of actors and number of inner radius actors for creation of spawner object
 ARadialActorsSpawner::ARadialActorsSpawner()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	SpawnRules.ActorsNb = 15;
-	SpawnRules.InnerSpawnRadius = 1000.f;
-	SpawnRules.OutterSpawnRadius = 1500.f;
+	SpawnRules.InnerSpawnRadius = 1500.f;
+	SpawnRules.OutterSpawnRadius = 2000.f;
 	SpawnRules.DistanceBetweenObjects = 80.f;
-	SpawnRules.ActorsNbStep = 10;
-	SpawnRules.SpawnRadiusStep = 5;
 
 	// create a bounding box components, it defines the area where to pick a location for spawn,
 	// set it as root component
@@ -26,6 +25,7 @@ ARadialActorsSpawner::ARadialActorsSpawner()
 	if (OutterSpawnBoundingBox)
 	{
 		OutterSpawnBoundingBox->SetCollisionProfileName("NoCollision");
+		OutterSpawnBoundingBox->SetBoxExtent(FVector(0.f, 0.f, 0.f));
 		SetRootComponent(OutterSpawnBoundingBox);
 	}
 
@@ -35,8 +35,24 @@ ARadialActorsSpawner::ARadialActorsSpawner()
 	{
 		InnerSpawnBoundingBox->SetCollisionProfileName("NoCollision");
 		SetRootComponent(InnerSpawnBoundingBox);
+		InnerSpawnBoundingBox->SetBoxExtent(FVector(0.f, 0.f, 0.f));
 		OutterSpawnBoundingBox->SetupAttachment(InnerSpawnBoundingBox);
 	}
+}
+
+// the function to initialize number of actors to spawn
+void ARadialActorsSpawner::Initialize(int32 ActorsNb, int32 InnerRadiusNb)
+{
+	if (ActorsNb < InnerRadiusNb)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ActorsNb < InnerRadiusNb, please check the values!"))
+		SpawnRules.ActorsNb = 15;
+		SpawnRules.InnerRadiusActorsNb = 10;
+		return;
+	}
+
+	SpawnRules.ActorsNb = ActorsNb;
+	SpawnRules.InnerRadiusActorsNb = InnerRadiusNb;
 }
 
 // sets the spawner position, taking into account player pawn position
@@ -47,6 +63,8 @@ void ARadialActorsSpawner::SetSpawnerPosition()
 	FVector PawnLocation = PlayerPawn->GetActorLocation();
 	if (PlayerPawn)
 	{
+		// SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f));
+
 		// take player position and place it higher a little bit
 		PawnLocation.Z += SpawnRules.OutterSpawnRadius;
 		SetActorLocation(PawnLocation);
@@ -58,11 +76,15 @@ void ARadialActorsSpawner::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// set the size of the bounding box
-	SetSpawnerPosition();
+	// set inner and outter box extents
 	OutterSpawnBoundingBox->SetBoxExtent(FVector(SpawnRules.OutterSpawnRadius, SpawnRules.OutterSpawnRadius, SpawnRules.OutterSpawnRadius));
 	InnerSpawnBoundingBox->SetBoxExtent(FVector(SpawnRules.InnerSpawnRadius, SpawnRules.InnerSpawnRadius, SpawnRules.InnerSpawnRadius));
-	SpawnTargetSpheres();
+	// set the size of the bounding box
+	SetSpawnerPosition();
+	// spawn new objects in inner radius
+	SpawnTargetSpheres(SpawnRules.InnerRadiusActorsNb, InnerSpawnBoundingBox->Bounds.BoxExtent, SpawnRules.InnerSpawnRadius);
+	// spawn new objects in outter radius
+	SpawnTargetSpheres(SpawnRules.ActorsNb - SpawnRules.InnerRadiusActorsNb, OutterSpawnBoundingBox->Bounds.BoxExtent, SpawnRules.OutterSpawnRadius);
 }
 
 // Called every frame
@@ -72,7 +94,7 @@ void ARadialActorsSpawner::Tick(float DeltaTime)
 }
 
 // spawns a N number of target spheres
-void ARadialActorsSpawner::SpawnTargetSpheres()
+void ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExtent, float Radius)
 {
 	if (!SpawnRules.SpawnObject)
 	{
@@ -84,37 +106,45 @@ void ARadialActorsSpawner::SpawnTargetSpheres()
 	int32 spawnedTargetsNb = 0;
 	FVector SpawnPointLocation;
 
-	/*
-		TO DO PICK OF BEST AVAILABLE POSITION, JUST IN CASE
-	*/
-
-	int32 attempts = 0;
-
-	while (spawnedTargetsNb < SpawnRules.ActorsNb && attempts <= 100)
+	// spawn attempts to create a new wave a targets
+	int32 SpawnAttempts = 0;
+	while (spawnedTargetsNb < NbOfSpheres && SpawnAttempts < 1000)
 	{
+		SpawnAttempts++;
+
 		// get a random point in the bounding sphere and spawn an TargetSphere
 		// we specify actor spawn parameters to nake it take into account collision with other objects on scene
 		// Actor will try to find a nearby non-colliding location (based on shape components), but will NOT spawn unless one is found
 		FActorSpawnParameters SpawnActorParameters;
 		SpawnActorParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-		SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), OutterSpawnBoundingBox->Bounds.BoxExtent);
+		SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), BoxExtent);
 		ASphereTarget* CreatedTarget = GetWorld()->SpawnActor<ASphereTarget>(SpawnRules.SpawnObject, SpawnPointLocation, FRotator::ZeroRotator, SpawnActorParameters);
 		if (CreatedTarget)
 		{
-			int32 attempts2 = 0;
-			while (!isActorFarFromSpawnedActors(CreatedTarget) && attempts2 <= 100)
+			int32 AttemptsToFindPosition = 0;
+			while (!isActorFarFromSpawnedActors(CreatedTarget, Radius) && AttemptsToFindPosition < 1000)
 			{
-				SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), OutterSpawnBoundingBox->Bounds.BoxExtent);
+				SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), BoxExtent);
 				CreatedTarget->SetActorLocation(SpawnPointLocation);
-				attempts2++;
+				AttemptsToFindPosition++;
+			}
+
+			if (AttemptsToFindPosition == 1000)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Failed to find proper position :("))
+				continue;
 			}
 
 			// add created target to the array of targets
 			spawnedTargetsNb++;
 			TargetSpheres.Add(CreatedTarget);
 		}
-		attempts++;
 	}
+
+
+
+	// remove all invalid objects from array
+	UpdatedActorsArray();
 }
 
 int32	ARadialActorsSpawner::GetNumberOfSpawnedActors() const
@@ -124,7 +154,8 @@ int32	ARadialActorsSpawner::GetNumberOfSpawnedActors() const
 
 // checks if the distance from the spawned target and the existing one
 // also checks the distance between the spawned target and the player pawn
-bool ARadialActorsSpawner::isActorFarFromSpawnedActors(ASphereTarget* SpawnedTarget) const
+// and checks the actor position being in reachable distance from the box radius
+bool ARadialActorsSpawner::isActorFarFromSpawnedActors(ASphereTarget* SpawnedTarget, float Radius) const
 {
 	// get player pawn and check if it is valid
 	APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
@@ -140,11 +171,33 @@ bool ARadialActorsSpawner::isActorFarFromSpawnedActors(ASphereTarget* SpawnedTar
 		{
 			float DistanceBetweenPoints = (SpawnedTarget->GetActorLocation() - TargetSpheres[i]->GetActorLocation()).Size();
 			float DistanceBetweenPointAndPlayer = (PlayerPawn->GetActorLocation() - TargetSpheres[i]->GetActorLocation()).Size();
-			if (DistanceBetweenPoints < SpawnRules.DistanceBetweenObjects || DistanceBetweenPointAndPlayer < SpawnRules.DistanceBetweenObjects)
+			float DistanceBetweenActorAndOrigin = (SpawnedTarget->GetActorLocation() - GetActorLocation()).Size();
+
+			if (DistanceBetweenPoints < SpawnRules.DistanceBetweenObjects)
 			{
-				//UE_LOG(LogTemp, Warning, TEXT("The targetr is too close %f or %f"), DistanceBetweenPoints, DistanceBetweenPointAndPlayer)
+				UE_LOG(LogTemp, Warning, TEXT("The target is too close to the the other actor: %f"), DistanceBetweenPoints)
 				return false;
 			}
+
+			if (DistanceBetweenPointAndPlayer < SpawnRules.DistanceBetweenObjects)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("The target is too close to the the player: %f"), DistanceBetweenPointAndPlayer)
+				return false;
+			}
+
+			if (DistanceBetweenActorAndOrigin > Radius)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("The target is too far form origin: %f"), DistanceBetweenActorAndOrigin)
+				return false;
+			}
+
+			//if (DistanceBetweenPoints < SpawnRules.DistanceBetweenObjects
+			//	|| DistanceBetweenPointAndPlayer < SpawnRules.DistanceBetweenObjects
+			//		|| DistanceBetweenActorAndOrigin > Radius)
+			//{
+			//	UE_LOG(LogTemp, Warning, TEXT("The targetr is too close %f or %f or %f"), DistanceBetweenPoints, DistanceBetweenPointAndPlayer, DistanceBetweenActorAndOrigin)
+			//	return false;
+			//}
 		}
 	}
 
@@ -161,10 +214,10 @@ void ARadialActorsSpawner::StartNewWave()
 	SpawnRules.OutterSpawnRadius += (SpawnRules.OutterSpawnRadius * (SpawnRules.SpawnRadiusStep / 100.f));
 	OutterSpawnBoundingBox->SetBoxExtent(FVector(SpawnRules.OutterSpawnRadius, SpawnRules.OutterSpawnRadius, SpawnRules.OutterSpawnRadius));
 	SetSpawnerPosition();
-	// remove all invalid objects from array
-	UpdatedActorsArray();
-	// spawn new objects
-	SpawnTargetSpheres();
+	// spawn new objects in inner radius
+	SpawnTargetSpheres(SpawnRules.InnerRadiusActorsNb, InnerSpawnBoundingBox->Bounds.BoxExtent, SpawnRules.InnerSpawnRadius);
+	// spawn new objects in outter radius
+	SpawnTargetSpheres(SpawnRules.ActorsNb - SpawnRules.InnerRadiusActorsNb, OutterSpawnBoundingBox->Bounds.BoxExtent, SpawnRules.OutterSpawnRadius);
 
 	UE_LOG(LogTemp, Warning, TEXT("SpawnRules.ActorsNb = %d, SpawnRules.SpawnRadius = %f, SpawnRules.ActorsNbStep = %f"), SpawnRules.ActorsNb, SpawnRules.OutterSpawnRadius, SpawnRules.ActorsNbStep)
 }
@@ -172,8 +225,6 @@ void ARadialActorsSpawner::StartNewWave()
 // updated the actors array, it removes add invalid objects
 void	ARadialActorsSpawner::UpdatedActorsArray()
 {
-	TArray<int32>	IndexesToRemove;
-
 	TargetSpheres.RemoveAll([](ASphereTarget* Val) {
 		return !IsValid(Val);
 		});
