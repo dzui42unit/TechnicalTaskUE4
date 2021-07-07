@@ -42,7 +42,11 @@ struct FSpawnRules
 
 	// radius of the aread where to spawn object
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "100", ClampMax = "3500", UIMin = "100", UIMax = "3500"))
-	float	SpawnRadius;
+	float	InnerSpawnRadius;
+
+	// radius of the aread where to spawn object
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "100", ClampMax = "3500", UIMin = "100", UIMax = "3500"))
+	float	OutterSpawnRadius;
 
 	// the step of changing the amount of spheres in percentages
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "5.0", ClampMax = "100.0", UIMin = "5.0", UIMax = "100.0"))
@@ -66,13 +70,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// spawns the targets in the area
-	void		SpawnTargetSpheres();
-
-	// returns the radius of the spawn area
-	float		GetSpawnerRadius() const;
+	void	SpawnTargetSpheres();
 
 	// returns the number of spawned actors
-	int32		GetNumberOfSpawnedActors() const;
+	int32	GetNumberOfSpawnedActors() const;
 
 	// checks if the distance of the actor is greater than some constant value
 	bool	isActorFarFromSpawnedActors(ASphereTarget* SpawnedTarget) const;
@@ -93,7 +94,11 @@ protected:
 
 	// sphere component to represent the area for spawning Target Spheres
 	UPROPERTY(EditDefaultsOnly)
-	UBoxComponent* SpawnBoundingBox;	
+	UBoxComponent* OutterSpawnBoundingBox;	
+
+	// sphere component to represent the area for spawning Target Spheres
+	UPROPERTY(EditDefaultsOnly)
+	UBoxComponent* InnerSpawnBoundingBox;
 
 	// array that holds all target objects
 	TArray<ASphereTarget *>	TargetSpheres;

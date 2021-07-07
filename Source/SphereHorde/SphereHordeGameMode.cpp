@@ -32,8 +32,8 @@ void ASphereHordeGameMode::BeginPlay()
 	// to spawn a RadialActorsSpawner if  RadialActorsSpawner is not nullptr
 	if (SpheresSpawner)
 	{
-		CreatedSheresSpawner = GetWorld()->SpawnActor<ARadialActorsSpawner>(SpheresSpawner, FVector::ZeroVector, FRotator::ZeroRotator);
-		if (CreatedSheresSpawner)
+		CreatedSpheresSpawner = GetWorld()->SpawnActor<ARadialActorsSpawner>(SpheresSpawner, FVector::ZeroVector, FRotator::ZeroRotator);
+		if (CreatedSpheresSpawner)
 		{
 			// set the position of the spawner
 			//CreatedSheresSpawner->SetSpawnerPosition();
@@ -63,7 +63,7 @@ void	ASphereHordeGameMode::UpdatedNubmerOfDestroyedSpheres(ASphereTarget* Target
 	if ((DestroyedSpheres % DestroyedSpheresPerWave) == 0 && (DestroyedSpheres != 0))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("TIME TO UPDATE WAVE"))
-		CreatedSheresSpawner->StartNewWave();
+		CreatedSpheresSpawner->StartNewWave();
 	}
 }
 
@@ -72,14 +72,15 @@ bool ASphereHordeGameMode::isInRangeFromTheOrigin(ASphereTarget* TargetSphere) c
 {
 	// get the position of twoo objects
 	FVector TargetSpherePosition = TargetSphere->GetActorLocation();
-	FVector SpawnerPosition = CreatedSheresSpawner->GetActorLocation();
+	FVector SpawnerPosition = CreatedSpheresSpawner->GetActorLocation();
 
 	// calculate the distance, if the distance is smaller than predefined radius - we returrn true and say
 	// that sphere is in range
 	float distance = (TargetSpherePosition - SpawnerPosition).Size();
-	if (distance <= SpheresDistanceFromOrigin)
+	// we take a half of disntace - as a radius
+	UE_LOG(LogTemp, Warning, TEXT("%s, %s, distance was %f"), *TargetSpherePosition.ToString(), *SpawnerPosition.ToString(), distance)
+	if (distance <= (SpheresDistanceFromOrigin))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("distance was %f"), distance)
 		return true;
 	}
 

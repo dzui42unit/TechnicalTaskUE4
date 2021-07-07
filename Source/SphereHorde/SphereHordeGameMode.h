@@ -35,7 +35,7 @@ public:
 
 private:
 	// a spheres spawners 
-	ARadialActorsSpawner* CreatedSheresSpawner;
+	ARadialActorsSpawner* CreatedSpheresSpawner;
 
 	// the number of the destroyed spheres
 	int32	DestroyedSpheres;

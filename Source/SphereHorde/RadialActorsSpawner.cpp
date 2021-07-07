@@ -13,17 +13,29 @@ ARadialActorsSpawner::ARadialActorsSpawner()
 	PrimaryActorTick.bCanEverTick = true;
 
 	SpawnRules.ActorsNb = 15;
-	SpawnRules.SpawnRadius = 1000.f;
+	SpawnRules.InnerSpawnRadius = 1000.f;
+	SpawnRules.OutterSpawnRadius = 1500.f;
 	SpawnRules.DistanceBetweenObjects = 80.f;
+	SpawnRules.ActorsNbStep = 10;
+	SpawnRules.SpawnRadiusStep = 5;
 
 	// create a bounding box components, it defines the area where to pick a location for spawn,
 	// set it as root component
 	// the radius is defined by the SpawnRules
-	SpawnBoundingBox = CreateDefaultSubobject<UBoxComponent>("Spawn Box");
-	if (SpawnBoundingBox)
+	OutterSpawnBoundingBox = CreateDefaultSubobject<UBoxComponent>("Outter Spawn Box");
+	if (OutterSpawnBoundingBox)
 	{
-		SpawnBoundingBox->SetCollisionProfileName("NoCollision");
-		SetRootComponent(SpawnBoundingBox);
+		OutterSpawnBoundingBox->SetCollisionProfileName("NoCollision");
+		SetRootComponent(OutterSpawnBoundingBox);
+	}
+
+	// create inner radius, to spawn objects to be near the spawn origin
+	InnerSpawnBoundingBox = CreateDefaultSubobject<UBoxComponent>("Inner Spawn Box");
+	if (InnerSpawnBoundingBox)
+	{
+		InnerSpawnBoundingBox->SetCollisionProfileName("NoCollision");
+		SetRootComponent(InnerSpawnBoundingBox);
+		OutterSpawnBoundingBox->SetupAttachment(InnerSpawnBoundingBox);
 	}
 }
 
@@ -36,7 +48,7 @@ void ARadialActorsSpawner::SetSpawnerPosition()
 	if (PlayerPawn)
 	{
 		// take player position and place it higher a little bit
-		PawnLocation.Z += SpawnRules.SpawnRadius;
+		PawnLocation.Z += SpawnRules.OutterSpawnRadius;
 		SetActorLocation(PawnLocation);
 	}
 }
@@ -48,7 +60,8 @@ void ARadialActorsSpawner::BeginPlay()
 
 	// set the size of the bounding box
 	SetSpawnerPosition();
-	SpawnBoundingBox->SetBoxExtent(FVector(SpawnRules.SpawnRadius, SpawnRules.SpawnRadius, SpawnRules.SpawnRadius));
+	OutterSpawnBoundingBox->SetBoxExtent(FVector(SpawnRules.OutterSpawnRadius, SpawnRules.OutterSpawnRadius, SpawnRules.OutterSpawnRadius));
+	InnerSpawnBoundingBox->SetBoxExtent(FVector(SpawnRules.InnerSpawnRadius, SpawnRules.InnerSpawnRadius, SpawnRules.InnerSpawnRadius));
 	SpawnTargetSpheres();
 }
 
@@ -56,12 +69,6 @@ void ARadialActorsSpawner::BeginPlay()
 void ARadialActorsSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
-
-// returns the radius of the spawner actor
-float ARadialActorsSpawner::GetSpawnerRadius() const
-{
-	return SpawnRules.SpawnRadius;
 }
 
 // spawns a N number of target spheres
@@ -90,14 +97,14 @@ void ARadialActorsSpawner::SpawnTargetSpheres()
 		// Actor will try to find a nearby non-colliding location (based on shape components), but will NOT spawn unless one is found
 		FActorSpawnParameters SpawnActorParameters;
 		SpawnActorParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-		SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), SpawnBoundingBox->Bounds.BoxExtent);
+		SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), OutterSpawnBoundingBox->Bounds.BoxExtent);
 		ASphereTarget* CreatedTarget = GetWorld()->SpawnActor<ASphereTarget>(SpawnRules.SpawnObject, SpawnPointLocation, FRotator::ZeroRotator, SpawnActorParameters);
 		if (CreatedTarget)
 		{
 			int32 attempts2 = 0;
 			while (!isActorFarFromSpawnedActors(CreatedTarget) && attempts2 <= 100)
 			{
-				SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), SpawnBoundingBox->Bounds.BoxExtent);
+				SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), OutterSpawnBoundingBox->Bounds.BoxExtent);
 				CreatedTarget->SetActorLocation(SpawnPointLocation);
 				attempts2++;
 			}
@@ -151,15 +158,15 @@ void ARadialActorsSpawner::StartNewWave()
 	// update number of actor on the certain percentage
 	SpawnRules.ActorsNb += ((float)SpawnRules.ActorsNb * (SpawnRules.ActorsNbStep / 100.0f));
 	// update spawnRadius of actor on the certain percentage and its box extent and its position
-	SpawnRules.SpawnRadius += (SpawnRules.SpawnRadius * (SpawnRules.SpawnRadiusStep / 100.f));
-	SpawnBoundingBox->SetBoxExtent(FVector(SpawnRules.SpawnRadius, SpawnRules.SpawnRadius, SpawnRules.SpawnRadius));
+	SpawnRules.OutterSpawnRadius += (SpawnRules.OutterSpawnRadius * (SpawnRules.SpawnRadiusStep / 100.f));
+	OutterSpawnBoundingBox->SetBoxExtent(FVector(SpawnRules.OutterSpawnRadius, SpawnRules.OutterSpawnRadius, SpawnRules.OutterSpawnRadius));
 	SetSpawnerPosition();
 	// remove all invalid objects from array
 	UpdatedActorsArray();
 	// spawn new objects
 	SpawnTargetSpheres();
 
-	UE_LOG(LogTemp, Warning, TEXT("SpawnRules.ActorsNb = %d, SpawnRules.SpawnRadius = %f, SpawnRules.ActorsNbStep = %f"), SpawnRules.ActorsNb, SpawnRules.SpawnRadius, SpawnRules.ActorsNbStep)
+	UE_LOG(LogTemp, Warning, TEXT("SpawnRules.ActorsNb = %d, SpawnRules.SpawnRadius = %f, SpawnRules.ActorsNbStep = %f"), SpawnRules.ActorsNb, SpawnRules.OutterSpawnRadius, SpawnRules.ActorsNbStep)
 }
 
 // updated the actors array, it removes add invalid objects
