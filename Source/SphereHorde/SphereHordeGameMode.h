@@ -37,12 +37,21 @@ public:
 	// updates the number of destroyed spheres
 	void	UpdatedNubmerOfDestroyedSpheres(ASphereTarget* TargetSphere);
 
+	// get the number of the current wave
+	int32	GetCurrentWaveNumber() const;
+
+	// get the number of the spheres destroyed
+	int32	GetCurrentDestroyedSpheresNumber() const;
+
 private:
 	// a spheres spawners 
 	ARadialActorsSpawner* CreatedSpheresSpawner;
 
 	// the number of the destroyed spheres
 	int32	DestroyedSpheres;
+
+	// the number of the current wave
+	int32	CurrentWaveNumber;
 
 	// checks if the sphere is in range of some distance from the spawner (1500.f) by default;
 	bool	isInRangeFromTheOrigin(ASphereTarget* TargetSphere) const;

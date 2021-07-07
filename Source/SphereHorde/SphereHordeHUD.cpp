@@ -5,6 +5,7 @@
 #include "Engine/Texture2D.h"
 #include "TextureResource.h"
 #include "CanvasItem.h"
+#include "SphereHordeGameMode.h"
 #include "UObject/ConstructorHelpers.h"
 
 ASphereHordeHUD::ASphereHordeHUD()
@@ -12,8 +13,9 @@ ASphereHordeHUD::ASphereHordeHUD()
 	// Set the crosshair texture
 	static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT("/Game/FirstPerson/Textures/FirstPersonCrosshair"));
 	CrosshairTex = CrosshairTexObj.Object;
+	ScoreMessage = "Score";
+	WaveMessage = "Wave";
 }
-
 
 void ASphereHordeHUD::DrawHUD()
 {
@@ -32,4 +34,12 @@ void ASphereHordeHUD::DrawHUD()
 	FCanvasTileItem TileItem( CrosshairDrawPosition, CrosshairTex->Resource, FLinearColor::White);
 	TileItem.BlendMode = SE_BLEND_Translucent;
 	Canvas->DrawItem( TileItem );
+
+	// draw the score and wave number to the HUD
+	ASphereHordeGameMode* GameMode = Cast<ASphereHordeGameMode>(GetWorld()->GetAuthGameMode());
+	if (GameMode)
+	{
+		FString  FinalScoreText = FString::Printf(TEXT("%s : %d %s : %d"), *ScoreMessage, GameMode->GetCurrentDestroyedSpheresNumber(), *WaveMessage, GameMode->GetCurrentWaveNumber());
+		DrawText(FinalScoreText, FLinearColor::Black, 0, 0, Font, 1.5f, false);
+	}
 }

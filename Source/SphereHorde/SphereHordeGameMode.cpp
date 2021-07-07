@@ -19,6 +19,9 @@ ASphereHordeGameMode::ASphereHordeGameMode()
 
 	// initialize counter of DestroyedSpheres
 	DestroyedSpheres = 0;
+	
+	// initialize the wave number
+	CurrentWaveNumber = 1;
 
 	// initialize the SpheresDistanceFromOrigin, that denotes the range from origin, within it the sphere should be counted as killed
 	// and get a point for its destruction
@@ -54,15 +57,26 @@ void	ASphereHordeGameMode::UpdatedNubmerOfDestroyedSpheres(ASphereTarget* Target
 	if (isInRangeFromTheOrigin(TargetSphere))
 	{
 		DestroyedSpheres++;
-		UE_LOG(LogTemp, Warning, TEXT("Number of the destroyed spheres: %d"), DestroyedSpheres)
+		// check if we have destroyed needed number of the spheres to finish the wave
+		// and start new wave if the number is reached
+		if ((DestroyedSpheres % DestroyedSpheresPerWave) == 0 && (DestroyedSpheres != 0))
+		{
+			CurrentWaveNumber++;
+			CreatedSpheresSpawner->StartNewWave();
+		}
 	}
-	// check if we have destroyed needed number of the spheres to finish the wave
-	// and start new wave if the number is reached
-	if ((DestroyedSpheres % DestroyedSpheresPerWave) == 0 && (DestroyedSpheres != 0))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("TIME TO UPDATE WAVE"))
-		CreatedSpheresSpawner->StartNewWave();
-	}
+}
+
+// return current wave number
+int32 ASphereHordeGameMode::GetCurrentWaveNumber() const
+{
+	return CurrentWaveNumber;
+}
+
+// return number of spheres destryed
+int32 ASphereHordeGameMode::GetCurrentDestroyedSpheresNumber() const
+{
+	return DestroyedSpheres;
 }
 
 // checks if the sphere is in range of some distance from the spawner (1500.f) by default;

@@ -4,8 +4,6 @@
 #include "SphereTarget.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/BoxComponent.h"
-#include "NavigationPath.h"
-#include "NavigationSystem.h"
 #include "RadialActorsSpawner.h"
 
 // the constructor that takes number of actors and number of inner radius actors for creation of spawner object
@@ -14,13 +12,13 @@ ARadialActorsSpawner::ARadialActorsSpawner()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// set default values for spawn rules
 	SpawnRules.InnerSpawnRadius = 1500.f;
 	SpawnRules.OutterSpawnRadius = 2000.f;
 	SpawnRules.DistanceBetweenObjects = 80.f;
-
+	
 	// create a bounding box components, it defines the area where to pick a location for spawn,
-	// set it as root component
-	// the radius is defined by the SpawnRules
+	// set it as root component, the radius is defined by the SpawnRules
 	OutterSpawnBoundingBox = CreateDefaultSubobject<UBoxComponent>("Outter Spawn Box");
 	if (OutterSpawnBoundingBox)
 	{
@@ -43,6 +41,7 @@ ARadialActorsSpawner::ARadialActorsSpawner()
 // the function to initialize number of actors to spawn
 void ARadialActorsSpawner::Initialize(int32 ActorsNb, int32 InnerRadiusNb)
 {
+	// check if the total number of actors is less than number actor to be spawned in the inner radius (1500.f) by default
 	if (ActorsNb < InnerRadiusNb)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ActorsNb < InnerRadiusNb, please check the values!"))
@@ -51,6 +50,7 @@ void ARadialActorsSpawner::Initialize(int32 ActorsNb, int32 InnerRadiusNb)
 		return;
 	}
 
+	// set the values
 	SpawnRules.ActorsNb = ActorsNb;
 	SpawnRules.InnerRadiusActorsNb = InnerRadiusNb;
 }
@@ -63,9 +63,7 @@ void ARadialActorsSpawner::SetSpawnerPosition()
 	FVector PawnLocation = PlayerPawn->GetActorLocation();
 	if (PlayerPawn)
 	{
-		// SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f));
-
-		// take player position and place it higher a little bit
+		// take player position and place spawner higher, hte hieght is the radius of the outter spawn box
 		PawnLocation.Z += SpawnRules.OutterSpawnRadius;
 		SetActorLocation(PawnLocation);
 	}
@@ -96,6 +94,7 @@ void ARadialActorsSpawner::Tick(float DeltaTime)
 // spawns a N number of target spheres
 void ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExtent, float Radius)
 {
+	// check if SpawnObject is defined
 	if (!SpawnRules.SpawnObject)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("SpawnRules.SpawnObject is NOT set"))
@@ -141,8 +140,6 @@ void ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExte
 		}
 	}
 
-
-
 	// remove all invalid objects from array
 	UpdatedActorsArray();
 }
@@ -169,6 +166,9 @@ bool ARadialActorsSpawner::isActorFarFromSpawnedActors(ASphereTarget* SpawnedTar
 	{
 		if (IsValid(TargetSpheres[i]))
 		{
+			// calculate the distance between new spawned target and all existing targets
+			// between player and new spawned target
+			// between new spawned target and origin
 			float DistanceBetweenPoints = (SpawnedTarget->GetActorLocation() - TargetSpheres[i]->GetActorLocation()).Size();
 			float DistanceBetweenPointAndPlayer = (PlayerPawn->GetActorLocation() - TargetSpheres[i]->GetActorLocation()).Size();
 			float DistanceBetweenActorAndOrigin = (SpawnedTarget->GetActorLocation() - GetActorLocation()).Size();
