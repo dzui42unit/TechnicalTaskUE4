@@ -34,15 +34,15 @@ struct FSpawnRules
 
 	// initial minimum distance between the actors
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "80.0", ClampMax = "160.0", UIMin = "80.0", UIMax = "160.0"))
-	float	DistanceBetweenObjects;
+	float	DistanceBetweenObjects = 80.f;
 
 	// radius of the aread where to spawn object
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "100", ClampMax = "3500", UIMin = "100", UIMax = "3500"))
-	float	InnerSpawnRadius;
+	float	InnerSpawnRadius = 1500.f;
 
 	// radius of the aread where to spawn object
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "100", ClampMax = "3500", UIMin = "100", UIMax = "3500"))
-	float	OutterSpawnRadius;
+	float	OutterSpawnRadius = 2000.f;
 
 	// the step of changing the amount of spheres in percentages
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "5.0", ClampMax = "100.0", UIMin = "5.0", UIMax = "100.0"))
@@ -57,6 +57,14 @@ struct FSpawnRules
 
 	// number of actors to spawn in inner radius
 	int32	InnerRadiusActorsNb;
+
+	// minimum scale of the actor to spawn
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.1", ClampMax = "0.9", UIMin = "0.1", UIMax = "0.9"))
+	float	MinActorScale = 5.f;
+
+	// minimum scale of the actor to spawn
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.01", ClampMax = "0.9", UIMin = "0.01", UIMax = "0.9"))
+	float	ScaleActorStep = 0.1f;
 };
 
 UCLASS()
@@ -111,4 +119,10 @@ protected:
 private:
 	// update the array of spawned actors
 	void		UpdatedActorsArray();
+
+	// the maximum scale of the spawned actor
+	float		MaxActorScale;
+
+	// current actor scale
+	float		CurrentActorScale;
 };

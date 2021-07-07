@@ -11,12 +11,11 @@ ARadialActorsSpawner::ARadialActorsSpawner()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	// set default values for spawn rules
-	SpawnRules.InnerSpawnRadius = 1500.f;
-	SpawnRules.OutterSpawnRadius = 2000.f;
-	SpawnRules.DistanceBetweenObjects = 80.f;
 	
+	// the the maximum scale of the spawned actor
+	MaxActorScale = 1.f;
+	CurrentActorScale = MaxActorScale;
+
 	// create a bounding box components, it defines the area where to pick a location for spawn,
 	// set it as root component, the radius is defined by the SpawnRules
 	OutterSpawnBoundingBox = CreateDefaultSubobject<UBoxComponent>("Outter Spawn Box");
@@ -107,7 +106,9 @@ void ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExte
 
 	// spawn attempts to create a new wave a targets
 	int32 SpawnAttempts = 0;
-	while (spawnedTargetsNb < NbOfSpheres && SpawnAttempts < 1000)
+	int32 AttemptsNumber = 1000;
+
+	while (spawnedTargetsNb < NbOfSpheres && SpawnAttempts < AttemptsNumber)
 	{
 		SpawnAttempts++;
 
@@ -118,10 +119,13 @@ void ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExte
 		SpawnActorParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 		SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), BoxExtent);
 		ASphereTarget* CreatedTarget = GetWorld()->SpawnActor<ASphereTarget>(SpawnRules.SpawnObject, SpawnPointLocation, FRotator::ZeroRotator, SpawnActorParameters);
+		
+		// set a scale for the 
+		
 		if (CreatedTarget)
 		{
 			int32 AttemptsToFindPosition = 0;
-			while (!isActorFarFromSpawnedActors(CreatedTarget, Radius) && AttemptsToFindPosition < 1000)
+			while (!isActorFarFromSpawnedActors(CreatedTarget, Radius) && AttemptsToFindPosition < AttemptsNumber)
 			{
 				SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), BoxExtent);
 				CreatedTarget->SetActorLocation(SpawnPointLocation);
@@ -133,6 +137,11 @@ void ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExte
 				UE_LOG(LogTemp, Warning, TEXT("Failed to find proper position :("))
 				continue;
 			}
+
+			// calculate and set new scale
+			CurrentActorScale = FMath::Clamp((CurrentActorScale - SpawnRules.ScaleActorStep), SpawnRules.MinActorScale, 1.f);
+			CreatedTarget->SetActorScale3D(FVector(CurrentActorScale));
+			UE_LOG(LogTemp, Warning, TEXT("New scale = %f"), CurrentActorScale)
 
 			// add created target to the array of targets
 			spawnedTargetsNb++;
@@ -208,6 +217,8 @@ bool ARadialActorsSpawner::isActorFarFromSpawnedActors(ASphereTarget* SpawnedTar
 // such as number of actors and spawn radius
 void ARadialActorsSpawner::StartNewWave()
 {
+	// reset the actor scale
+	CurrentActorScale = MaxActorScale;
 	// update number of actor on the certain percentage
 	SpawnRules.ActorsNb += ((float)SpawnRules.ActorsNb * (SpawnRules.ActorsNbStep / 100.0f));
 	// update spawnRadius of actor on the certain percentage and its box extent and its position
