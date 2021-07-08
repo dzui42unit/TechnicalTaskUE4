@@ -1,10 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "SphereTarget.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/BoxComponent.h"
+#include "GameFramework/PlayerController.h"
 #include "RadialActorsSpawner.h"
+
 
 // the constructor that takes number of actors and number of inner radius actors for creation of spawner object
 ARadialActorsSpawner::ARadialActorsSpawner()
@@ -63,7 +64,7 @@ void ARadialActorsSpawner::SetSpawnerPosition()
 	if (PlayerPawn)
 	{
 		// take player position and place spawner higher, hte hieght is the radius of the outter spawn box
-		PawnLocation.Z += SpawnRules.OutterSpawnRadius;
+		// PawnLocation.Z += SpawnRules.OutterSpawnRadius;
 		SetActorLocation(PawnLocation);
 	}
 }
@@ -91,7 +92,7 @@ void ARadialActorsSpawner::Tick(float DeltaTime)
 }
 
 // spawns a N number of target spheres
-void ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExtent, float Radius)
+void ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, const FVector& BoxExtent, float Radius)
 {
 	// check if SpawnObject is defined
 	if (!SpawnRules.SpawnObject)
@@ -117,17 +118,51 @@ void ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExte
 		// Actor will try to find a nearby non-colliding location (based on shape components), but will NOT spawn unless one is found
 		FActorSpawnParameters SpawnActorParameters;
 		SpawnActorParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-		SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), BoxExtent);
+
+		// get the random point for spawning in the boxExtent
+		// or random reachable point in radius
+		if (!SwitchSearchPointWay)
+		{
+			//UKismetMathLibrary::RandomPOint
+			SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), BoxExtent);
+		}
+		else
+		{
+			//SpawnPointLocation = UNavigationSystemV1::GetRandomReachablePointInRadius(GetWorld(), GetActorLocation(), Radius);
+
+			//APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
+			//FVector PawnLocation = PlayerPawn->GetActorLocation();
+			//if (PlayerPawn)
+			//{
+			//	SpawnPointLocation.Z += 300.f; //FMath::RandRange(PlayerPawn->GetActorLocation().Z, PlayerPawn->GetActorLocation().Z + Radius);
+			//}
+
+		}
+
+		// spawn an actor
 		ASphereTarget* CreatedTarget = GetWorld()->SpawnActor<ASphereTarget>(SpawnRules.SpawnObject, SpawnPointLocation, FRotator::ZeroRotator, SpawnActorParameters);
-		
-		// set a scale for the 
-		
+				
 		if (CreatedTarget)
 		{
 			int32 AttemptsToFindPosition = 0;
 			while (!isActorFarFromSpawnedActors(CreatedTarget, Radius) && AttemptsToFindPosition < AttemptsNumber)
 			{
-				SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), BoxExtent);
+
+				if (!SwitchSearchPointWay)
+				{
+					SpawnPointLocation = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), BoxExtent);
+				}
+				else
+				{
+					//SpawnPointLocation = UNavigationSystemV1::GetRandomReachablePointInRadius(GetWorld(), GetActorLocation(), Radius);
+					//APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
+					//FVector PawnLocation = PlayerPawn->GetActorLocation();
+					//if (PlayerPawn)
+					//{
+					//	SpawnPointLocation.Z += 300.f; // = FMath::RandRange(PlayerPawn->GetActorLocation().Z, PlayerPawn->GetActorLocation().Z + Radius);
+					//}
+				}
+
 				CreatedTarget->SetActorLocation(SpawnPointLocation);
 				AttemptsToFindPosition++;
 			}
@@ -152,6 +187,24 @@ void ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExte
 	// remove all invalid objects from array
 	UpdatedActorsArray();
 }
+
+// returns an actor spawn point depending on the choosen way
+// whether from the randon point in box extent or in the reachable area
+//FVector ARadialActorsSpawner::CalculateActrorSpawnPoint(const FVector& BoxExtent)
+//{
+//	FVector SpawnPoint;
+//
+//	// get the random point for spawning in the boxExtent
+//	if (!SwitchSearchPointWay)
+//	{
+//		SpawnPoint = UKismetMathLibrary::RandomPointInBoundingBox(GetActorLocation(), BoxExtent);
+//	}
+//	else
+//	{ 
+//		UNavigationSystemV1::GetRandomReachablePointInRadius(GetWorld(), GetActorLocation(), );
+//	}
+//	return SpawnPoint;
+//}
 
 int32	ARadialActorsSpawner::GetNumberOfSpawnedActors() const
 {
@@ -187,26 +240,16 @@ bool ARadialActorsSpawner::isActorFarFromSpawnedActors(ASphereTarget* SpawnedTar
 				UE_LOG(LogTemp, Warning, TEXT("The target is too close to the the other actor: %f"), DistanceBetweenPoints)
 				return false;
 			}
-
 			if (DistanceBetweenPointAndPlayer < SpawnRules.DistanceBetweenObjects)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("The target is too close to the the player: %f"), DistanceBetweenPointAndPlayer)
 				return false;
 			}
-
 			if (DistanceBetweenActorAndOrigin > Radius)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("The target is too far form origin: %f"), DistanceBetweenActorAndOrigin)
 				return false;
 			}
-
-			//if (DistanceBetweenPoints < SpawnRules.DistanceBetweenObjects
-			//	|| DistanceBetweenPointAndPlayer < SpawnRules.DistanceBetweenObjects
-			//		|| DistanceBetweenActorAndOrigin > Radius)
-			//{
-			//	UE_LOG(LogTemp, Warning, TEXT("The targetr is too close %f or %f or %f"), DistanceBetweenPoints, DistanceBetweenPointAndPlayer, DistanceBetweenActorAndOrigin)
-			//	return false;
-			//}
 		}
 	}
 

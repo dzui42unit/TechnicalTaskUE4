@@ -6,8 +6,10 @@
 #include "GameFramework/Actor.h"
 #include "RadialActorsSpawner.generated.h"
 
-class ASphereTarget;
+
+
 class UBoxComponent;
+class ASphereTarget;
 
 /*
 	define the struct that describes the rules of the spawning process
@@ -20,8 +22,6 @@ class UBoxComponent;
 	5. step of changing the amount of spheres in percentages
 	6. step of changing the spawn radius in percentages
 */
-
-class UBoxComponent;
 
 USTRUCT()
 struct FSpawnRules
@@ -80,7 +80,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// spawns the targets in the area
-	void	SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExtent, float Radius);
+	void	SpawnTargetSpheres(int32 NbOfSpheres, const FVector& BoxExtent, float Radius);
 
 	// returns the number of spawned actors
 	int32	GetNumberOfSpawnedActors() const;
@@ -90,9 +90,6 @@ public:
 
 	// update the spawner parameters, number of spheres and radius
 	void	StartNewWave();
-
-	// sets the spawner position, taking into account player pawn position
-	void	SetSpawnerPosition();
 
 	// initialize spawn actors number and spawn actors inside the inner radius
 	void	Initialize(int32 ActorsNb, int32 InnerRadiusNb);
@@ -116,6 +113,11 @@ protected:
 	// array that holds all target objects
 	TArray<ASphereTarget *>	TargetSpheres;
 
+	// boolean to swtich from the Gettting random point in the box extent
+	// to the getting random reachable point in area
+	UPROPERTY(EditDefaultsOnly, Category = "Spawn Settings")
+	bool	SwitchSearchPointWay = false;
+
 private:
 	// update the array of spawned actors
 	void		UpdatedActorsArray();
@@ -125,4 +127,11 @@ private:
 
 	// current actor scale
 	float		CurrentActorScale;
+
+	// sets the spawner position, taking into account player pawn position
+	void	SetSpawnerPosition();
+
+	// returns an actor spawn point depending on the choosen way
+	// whether from the randon point in box extent or in the reachable area
+	// FVector		CalculateActrorSpawnPoint(const FVector& BoxExtent);
 };
