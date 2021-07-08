@@ -6,9 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "RadialActorsSpawner.generated.h"
 
-class ASphereTarget;
 class UBoxComponent;
-
+class ASphereTarget;
+class AActor;
 /*
 	define the struct that describes the rules of the spawning process
 	all the properties are axposed to the blueprint
@@ -20,8 +20,6 @@ class UBoxComponent;
 	5. step of changing the amount of spheres in percentages
 	6. step of changing the spawn radius in percentages
 */
-
-class UBoxComponent;
 
 USTRUCT()
 struct FSpawnRules
@@ -37,11 +35,11 @@ struct FSpawnRules
 	float	DistanceBetweenObjects = 80.f;
 
 	// radius of the aread where to spawn object
-	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "100", ClampMax = "3500", UIMin = "100", UIMax = "3500"))
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "1500.0", ClampMax = "2000.0", UIMin = "1500.0", UIMax = "2000.0"))
 	float	InnerSpawnRadius = 1500.f;
 
 	// radius of the aread where to spawn object
-	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "100", ClampMax = "3500", UIMin = "100", UIMax = "3500"))
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "2000.0", ClampMax = "3500.0", UIMin = "2000.0", UIMax = "3500.0"))
 	float	OutterSpawnRadius = 2000.f;
 
 	// the step of changing the amount of spheres in percentages
@@ -60,11 +58,16 @@ struct FSpawnRules
 
 	// minimum scale of the actor to spawn
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.1", ClampMax = "0.9", UIMin = "0.1", UIMax = "0.9"))
-	float	MinActorScale = 5.f;
+	float	MinActorScale = 0.5f;
 
 	// minimum scale of the actor to spawn
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.01", ClampMax = "0.9", UIMin = "0.01", UIMax = "0.9"))
 	float	ScaleActorStep = 0.1f;
+
+	// boolean to swtich from the Gettting random point in the box extent
+	// to the getting random reachable point in area
+	UPROPERTY(EditDefaultsOnly, Category = "Spawn Settings")
+	bool	SpawnObjectsUnderPawn = false;
 };
 
 UCLASS()
@@ -80,19 +83,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// spawns the targets in the area
-	void	SpawnTargetSpheres(int32 NbOfSpheres, FVector BoxExtent, float Radius);
-
-	// returns the number of spawned actors
-	int32	GetNumberOfSpawnedActors() const;
+	void	SpawnTargetSpheres(int32 NbOfSpheres, const FVector& BoxExtent, float Radius);
 
 	// checks if the distance of the actor is greater than some constant value
 	bool	isActorFarFromSpawnedActors(ASphereTarget* SpawnedTarget, float Radius) const;
 
 	// update the spawner parameters, number of spheres and radius
 	void	StartNewWave();
-
-	// sets the spawner position, taking into account player pawn position
-	void	SetSpawnerPosition();
 
 	// initialize spawn actors number and spawn actors inside the inner radius
 	void	Initialize(int32 ActorsNb, int32 InnerRadiusNb);
@@ -106,23 +103,36 @@ protected:
 	FSpawnRules	SpawnRules;
 
 	// sphere component to represent the area for spawning Target Spheres
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(VisibleAnywhere)
 	UBoxComponent* OutterSpawnBoundingBox;	
 
 	// sphere component to represent the area for spawning Target Spheres
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(VisibleAnywhere)
 	UBoxComponent* InnerSpawnBoundingBox;
 
-	// array that holds all target objects
-	TArray<ASphereTarget *>	TargetSpheres;
-
 private:
-	// update the array of spawned actors
-	void		UpdatedActorsArray();
-
 	// the maximum scale of the spawned actor
 	float		MaxActorScale;
 
 	// current actor scale
 	float		CurrentActorScale;
+
+	// sets the spawner position, taking into account player pawn position
+	void	SetSpawnerPosition();
+
+	// the float value that represents Z adjustment of the of the spawner
+	// relatively to the player pawn
+	float	zOffset;
+
+	// verctor that represents a final inner box extent
+	FVector	BoxExtentInner;
+
+	// verctor that represents a final outter box extent
+	FVector	BoxExtentOutter;
+
+	// updates the box extent of the inner and outter box
+	void	UpdateZoffsetAndBoxHeight();
+
+	// get number of the actors in the radius
+	TArray<AActor*>	GetTargetsOnLevel() const;
 };

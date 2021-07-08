@@ -90,7 +90,6 @@ bool ASphereHordeGameMode::isInRangeFromTheOrigin(ASphereTarget* TargetSphere) c
 	// that sphere is in range
 	float distance = (TargetSpherePosition - SpawnerPosition).Size();
 	// we take a half of disntace - as a radius
-	UE_LOG(LogTemp, Warning, TEXT("%s, %s, distance was %f"), *TargetSpherePosition.ToString(), *SpawnerPosition.ToString(), distance)
 	if (distance <= (SpheresDistanceFromOrigin))
 	{
 		return true;

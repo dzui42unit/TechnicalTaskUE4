@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "SphereTarget.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Particles/ParticleSystem.h"
 #include "SphereHordeGameMode.h"
 #include "Kismet/GameplayStatics.h"
-#include "SphereTarget.h"
 
 // Sets default values
 ASphereTarget::ASphereTarget()
