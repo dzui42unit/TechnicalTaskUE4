@@ -173,16 +173,13 @@ void	ARadialActorsSpawner::SpawnTargetSpheres(int32 NbOfSpheres, const FVector& 
 
 		// spawn an actor
 		ASphereTarget* CreatedTarget = GetWorld()->SpawnActor<ASphereTarget>(SpawnRules.SpawnObject, SpawnPointLocation, FRotator::ZeroRotator, SpawnActorParameters);
-		
-		if (spawnedTargetsNb != 0)
-		{
-			// calculate and set new scale, skip first spawned item
-			CurrentActorScale = FMath::Clamp((CurrentActorScale - SpawnRules.ScaleActorStep), SpawnRules.MinActorScale, 1.f);
-			CreatedTarget->SetActorScale3D(FVector(CurrentActorScale));
-		}
 
 		if (CreatedTarget)
 		{
+			CreatedTarget->SetActorScale3D(FVector(CurrentActorScale));
+			// calculate and set new scale, skip first spawned item
+			CurrentActorScale = FMath::Clamp((CurrentActorScale - SpawnRules.ScaleActorStep), SpawnRules.MinActorScale, 1.f);
+
 			int32 AttemptsToFindPosition = 0;
 			while (!isActorFarFromSpawnedActors(CreatedTarget, Radius) && AttemptsToFindPosition < AttemptsNumber)
 			{ 

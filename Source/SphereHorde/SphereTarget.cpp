@@ -33,12 +33,13 @@ void ASphereTarget::PlayDeathEffectsAndDestroy()
 	if (DestructionParticle)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), DestructionParticle, GetActorLocation());
-		ASphereHordeGameMode* GameMode = Cast<ASphereHordeGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-		Destroy();
-		if (GameMode)
-		{
-			GameMode->UpdatedNubmerOfDestroyedSpheres(this);
-		}
+	}
+
+	ASphereHordeGameMode* GameMode = Cast<ASphereHordeGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	Destroy();
+	if (GameMode)
+	{
+		GameMode->UpdatedNubmerOfDestroyedSpheres(this);
 	}
 }
 

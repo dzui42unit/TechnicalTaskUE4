@@ -114,11 +114,8 @@ void ASphereHordeCharacter::OnFire()
 		}
 	}
 
-	// tmp for disabling sound
-	bool bSoundEnabled = false;
-
 	// try and play the sound if specified
-	if (FireSound != nullptr && bSoundEnabled)
+	if (FireSound != nullptr)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
 	}

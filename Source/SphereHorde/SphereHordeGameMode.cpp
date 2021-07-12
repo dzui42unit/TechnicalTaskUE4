@@ -62,7 +62,10 @@ void	ASphereHordeGameMode::UpdatedNubmerOfDestroyedSpheres(ASphereTarget* Target
 		if ((DestroyedSpheres % DestroyedSpheresPerWave) == 0 && (DestroyedSpheres != 0))
 		{
 			CurrentWaveNumber++;
-			CreatedSpheresSpawner->StartNewWave();
+			if (CreatedSpheresSpawner)
+			{
+				CreatedSpheresSpawner->StartNewWave();
+			}
 		}
 	}
 }
